@@ -4,32 +4,22 @@ import (
 	"sync"
 )
 
-// odd routine
-func odd_routine(odd_lock, even_lock *sync.Mutex, wg *sync.WaitGroup) {
+func print_routine(start_number int, first_lock, second_lock *sync.Mutex, wg *sync.WaitGroup) {
 	defer wg.Done()
-	for i := 1; i < 100; i = i + 2 {
-		odd_lock.Lock()
+	for i := start_number; i < 100; i = i + 2 {
+		second_lock.Lock()
 		println(i)
-		even_lock.Unlock()
+		first_lock.Unlock()
 	}
 }
 
-// even routine
-func even_routine(odd_lock, even_lock *sync.Mutex, wg *sync.WaitGroup) {
-	defer wg.Done()
-	for i := 0; i < 100; i = i + 2 {
-		even_lock.Lock()
-		println(i)
-		odd_lock.Unlock()
-	}
-}
 func main() {
 	var odd_lock = sync.Mutex{}
 	var even_lock = sync.Mutex{}
 	var wg sync.WaitGroup
 	odd_lock.Lock()
 	wg.Add(2)
-	go odd_routine(&odd_lock, &even_lock, &wg)
-	go even_routine(&odd_lock, &even_lock, &wg)
+	go print_routine(0, &odd_lock, &even_lock, &wg)
+	go print_routine(1, &even_lock, &odd_lock, &wg)
 	wg.Wait()
 }
