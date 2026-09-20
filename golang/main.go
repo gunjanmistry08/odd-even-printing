@@ -1,31 +1,35 @@
 package main
 
-func print_routine(start_number int, firstTurn, secondTurn, done chan struct{}) {
-	for i := start_number; i <= 100; i = i + 2 {
-		<-firstTurn
+import "time"
 
-		println(i)
-		if i != 100 {
-			secondTurn <- struct{}{}
+func printRoutine(startNumber int) <-chan int {
+	out := make(chan int)
+
+	go func() {
+		defer close(out)
+
+		for i := startNumber; ; i += 2 {
+			out <- i
 		}
+	}()
 
-	}
-	done <- struct{}{}
+	return out
 }
 
 func main() {
 
-	even_turn := make(chan struct{})
-	odd_turn := make(chan struct{})
+	even_chan := printRoutine(0)
+	odd_chan := printRoutine(1)
 
-	done := make(chan struct{})
+	for i := 0; i < 100; i++ {
+		select {
+		case num1 := <-even_chan:
+			println(num1)
+		case num2 := <-odd_chan:
+			println(num2)
+		}
+	}
 
-	go print_routine(0, even_turn, odd_turn, done)
-	go print_routine(1, odd_turn, even_turn, done)
-
-	even_turn <- struct{}{}
-
-	<-done
-	<-done
+	time.Sleep(time.Second * 3)
 
 }
